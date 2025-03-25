@@ -2,6 +2,7 @@ package io.hhplus.tdd.point.service
 
 import io.hhplus.tdd.database.PointHistoryTable
 import io.hhplus.tdd.database.UserPointTable
+import io.hhplus.tdd.point.PointHistory
 import io.hhplus.tdd.point.TransactionType
 import io.hhplus.tdd.point.UserPoint
 import org.apache.coyote.BadRequestException
@@ -43,5 +44,9 @@ class PointService(
         this.pointHistoryRepository.insert(id, amount, TransactionType.USE, updatedUserPoint.updateMillis)
 
         return updatedUserPoint
+    }
+
+    fun getHistories(id: Long): List<PointHistory> {
+        return this.pointHistoryRepository.selectAllByUserId(id)
     }
 }

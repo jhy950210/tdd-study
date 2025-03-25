@@ -1,0 +1,72 @@
+package io.hhplus.tdd.point.service
+
+import io.hhplus.tdd.point.PointHistory
+import io.hhplus.tdd.point.TransactionType
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
+
+@SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class PointServiceIntegrationTest {
+    @Autowired
+    private lateinit var pointService: PointService
+
+    @Test
+    fun `포인트 내역 조회 성공 - 유저가 포인트 충전&사용 이력이 없으면 emptyList 반환`() {
+        // When
+        val userId = 1L
+        val result: List<PointHistory> = pointService.getHistories(userId)
+
+        // Then
+        assertEquals(result, emptyList<PointHistory>())
+    }
+
+    @Test
+    fun `포인트 내역 조회 성공 - 유저가 포인트 충전 이력이 있으면 {transactionType = CHARGE, amount = 충전금액}을 가진 객체를 담은 List 반환`() {
+        // Given
+        // 충전
+        val userId = 1L
+        val point = 1000L
+        pointService.charge(userId, point)
+
+        // When
+        val result: List<PointHistory> = pointService.getHistories(userId)
+
+        // Then
+        assertEquals(result.size, 1)
+
+        val chargeHistory = result[0]
+        assertEquals(chargeHistory.userId, userId)
+        assertEquals(chargeHistory.type, TransactionType.CHARGE)
+        assertEquals(chargeHistory.amount, point)
+    }
+
+    @Test
+    fun `포인트 내역 조회 성공 - 유저가 포인트 사용 이력이 있으면 {transactionType = USE, amount = 사용금액}을 가진 객체를 담은 List 반환`() {
+        // Given
+        // 1. 충전
+        val userId = 1L
+        val chargedPoint = 1000L
+        pointService.charge(userId, chargedPoint)
+        // 2. 사용
+        val usedPoint = 500L
+        pointService.use(userId, usedPoint)
+
+        // When
+        val result: List<PointHistory> = pointService.getHistories(userId)
+
+        // Then
+        assertEquals(result.size, 2)
+
+        val chargeHistory = result[0]
+        val useHistory = result[1]
+        assertEquals(chargeHistory.userId, userId)
+        assertEquals(chargeHistory.type, TransactionType.CHARGE)
+        assertEquals(useHistory.userId, userId)
+        assertEquals(useHistory.type, TransactionType.USE)
+        assertEquals(useHistory.amount, usedPoint)
+    }
+}

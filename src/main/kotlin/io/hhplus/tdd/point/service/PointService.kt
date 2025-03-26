@@ -20,11 +20,10 @@ class PointService(
     fun charge(id: Long, amount: Long): UserPoint {
         if (amount <= 0L) throw BadRequestException("0과 같거나 적은 값은 충전이 불가합니다.")
 
-        val pointLimit = 10000L
         val foundUserPoint = this.pointRepository.selectById(id)
         val newTotalPoint = amount + foundUserPoint.point
 
-        if (newTotalPoint > pointLimit) throw BadRequestException("포인트 한계 금액을 초과하였습니다.")
+        if (newTotalPoint > UserPoint.POINT_LIMIT) throw BadRequestException("포인트 한계 금액을 초과하였습니다.")
 
         val updatedUserPoint = this.pointRepository.insertOrUpdate(id, newTotalPoint)
         this.pointHistoryRepository.insert(id, amount, TransactionType.CHARGE, updatedUserPoint.updateMillis)
